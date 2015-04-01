@@ -5,6 +5,7 @@
 */
 package chessmaster;
 
+import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Queue;
@@ -20,15 +21,60 @@ public class Chessmaster {
      */
     public static void main(String[] args) {
         
+        ResourceList resources = new ResourceList();
+        
+        resources.resources.add(new Resource(1, 500));
+        resources.resources.add(new Resource(2, 500));
+        
+        Queue<Task> tasks = new LinkedList<>();
+        
+        List<Long> costs = new ArrayList<>();
+        costs.add(new Long(50));
+        costs.add(new Long(200));
+        costs.add(new Long(350));
+        
+        
+        tasks.add(new Task(1, costs));
+        tasks.add(new Task(2, costs));
+        
+        ResourceList out = Chessmaster.minmaxPlayer(resources, tasks, 4);
+        
+        System.out.println("best waste: " + out.getWastage());
+        for (Resource resource : out.resources) {
+            System.out.println("R" + resource.id);
+            for (AllocatedTask task : resource.getTasks()) {
+                System.out.println("| T" + task.taskRef.id);
+            }
+            System.out.println("");
+        }
+        
     }
     
-    private ResourceList minmaxPlayer(ResourceList resourceList, Queue<Task> taskList, int depth) {
-        for (Resource resource : resourceList) {
-            minmaxNature(resourceList, taskList, depth-1);
+    private static ResourceList minmaxPlayer(ResourceList resourceList, Queue<Task> taskList, int depth) {
+        
+        // create a local best to minimise with maximum wastage
+        ResourceList best = new ResourceList();
+        best.resources.add(new Resource(0, Long.MAX_VALUE));
+        
+        // if we can still go deeper
+        if (depth != 0) {
+            for (Resource resource : resourceList.resources) {
+                // run recursive call with current resource
+                ResourceList result = minmaxNature(resource, resourceList, taskList, depth-1);
+                
+                // minimise player's play
+                if (result.getWastage() < best.getWastage())
+                    best = result;
+            }
+            return best;
+        } 
+        // if the maximum depth was reached
+        else {
+            return resourceList;
         }
     }
     
-    private ResourceList minmaxNature(Resource resource, ResourceList resourceList, Queue<Task> taskList, int depth) {
+    private static ResourceList minmaxNature(Resource resource, ResourceList resourceList, Queue<Task> taskList, int depth) {
         
         Task task;
         ResourceList best = new ResourceList();
@@ -74,15 +120,14 @@ public class Chessmaster {
                     }
                 }
             }
+            return best;
         } else {
             // if the max depth was reached or there aren't any more tasks
-            best = resourceList;
+            return resourceList;
         }
-        
-        return best;
     }
     
-    private Resource getResource(Resource r, List<Resource> rs) {
+    private static Resource getResource(Resource r, List<Resource> rs) {
         return rs.get(rs.indexOf(r));
     }
     

@@ -9,17 +9,13 @@ package chessmaster;
  *
  * @author willian
  */
-class AllocatedTask {
-    private final long cost;
-    private final Task taskRef;
+public class AllocatedTask {
+    public final long cost;
+    public final Task taskRef;
 
     public AllocatedTask(Long cost, Task task) {
         this.cost = cost;
         taskRef = task;
-    }
-    
-    public Long getCost() {
-        return cost;
     }
     
 }

@@ -33,6 +33,10 @@ class ResourceList {
         for (Resource resource : resources) {
             waste += resource.getWastage();
         }
+        
+        if (waste < 0)
+            return Long.MAX_VALUE;
+        
         return waste;
     }
     

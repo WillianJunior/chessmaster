@@ -14,11 +14,13 @@ import java.util.List;
  */
 public class Resource {
     
-    public Long value;
+    public final int id;
+    public final Long value;
     private Long waste;
     private final List<AllocatedTask> allocatedTasks;
 
-    public Resource(Long value) {
+    public Resource(int id, long value) {
+        this.id = id;
         this.value = value;
         waste = value;
         allocatedTasks = new ArrayList<>();
@@ -26,6 +28,7 @@ public class Resource {
     
     // Copy constructor
     public Resource(Resource resource) {
+        this.id = resource.id;
         this.value = resource.value;
         waste = resource.value;
         allocatedTasks = new ArrayList<>(resource.getTasks());
@@ -38,7 +41,7 @@ public class Resource {
     
     public void allocateTask(AllocatedTask task) {
         allocatedTasks.add(task);
-        waste -= task.getCost();
+        waste -= task.cost;
     }
     
     public List<AllocatedTask> getTasks() {
