@@ -30,10 +30,13 @@ public class Resource {
     public Resource(Resource resource) {
         this.id = resource.id;
         this.value = resource.value;
-        waste = resource.value;
+        long sum = 0;
+        for (AllocatedTask task : resource.allocatedTasks) {
+            sum += task.cost;
+        }
+        waste = resource.value - sum;
         allocatedTasks = new ArrayList<>(resource.getTasks());
     }
-    
     
     public Long getWastage() {
         return waste;
@@ -46,6 +49,12 @@ public class Resource {
     
     public List<AllocatedTask> getTasks() {
         return allocatedTasks;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        Resource r = (Resource) obj;
+        return id == r.id;
     }
     
 }

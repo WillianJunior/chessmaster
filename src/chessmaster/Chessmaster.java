@@ -24,7 +24,7 @@ public class Chessmaster {
         ResourceList resources = new ResourceList();
         
         resources.resources.add(new Resource(1, 500));
-        resources.resources.add(new Resource(2, 500));
+        resources.resources.add(new Resource(2, 600));
         
         Queue<Task> tasks = new LinkedList<>();
         
@@ -33,11 +33,15 @@ public class Chessmaster {
         costs.add(new Long(200));
         costs.add(new Long(350));
         
+        List<Long> costs2 = new ArrayList<>();
+        costs2.add(new Long(150));
+        costs2.add(new Long(200));
         
         tasks.add(new Task(1, costs));
         tasks.add(new Task(2, costs));
+        tasks.add(new Task(3, costs2));
         
-        ResourceList out = Chessmaster.minmaxPlayer(resources, tasks, 4);
+        ResourceList out = Chessmaster.minmaxPlayer(resources, tasks, 6);
         
         System.out.println("best waste: " + out.getWastage());
         for (Resource resource : out.resources) {
@@ -59,15 +63,19 @@ public class Chessmaster {
         // if we can still go deeper
         if (depth != 0) {
             for (Resource resource : resourceList.resources) {
+                // create resourceList and taskList copies
+                Queue<Task> taskListCopy = new LinkedList<>(taskList);
+                ResourceList resourceListCopy = new ResourceList(resourceList);
+                
                 // run recursive call with current resource
-                ResourceList result = minmaxNature(resource, resourceList, taskList, depth-1);
+                ResourceList result = minmaxNature(resource, resourceListCopy, taskListCopy, depth-1);
                 
                 // minimise player's play
                 if (result.getWastage() < best.getWastage())
                     best = result;
             }
             return best;
-        } 
+        }
         // if the maximum depth was reached
         else {
             return resourceList;
@@ -82,7 +90,7 @@ public class Chessmaster {
         // if we can still go deeper and we have a task to schedule
         if (depth != 0 && (task = taskList.poll()) != null) {
             // for each aproximation of a task's cost
-            for (Long cost : task.costs) {     
+            for (Long cost : task.costs) {
                 // attempt to use the new resource to allocate the new task
                 if (resource != null) {
                     // create resourceList and taskList copies
@@ -91,10 +99,7 @@ public class Chessmaster {
                     
                     // Allocate the newTask to the new resource
                     AllocatedTask newTask = new AllocatedTask(cost, task);
-                    resource.allocateTask(newTask);
-                    
-                    // add the new resource to the resourceListCopy
-                    resourceListCopy.resources.add(resource);
+                    getResource(resource, resourceListCopy.resources).allocateTask(newTask);
                     
                     // recursive call
                     best = minmaxPlayer(resourceListCopy, taskListCopy, depth-1);
@@ -118,6 +123,15 @@ public class Chessmaster {
                         if (result.getWastage() > best.getWastage())
                             best = result;
                     }
+                }
+            }
+            
+            // penalise negative wastage (underprovisioning)
+            for (Resource r : best.resources) {
+                if (r.getWastage() < 0) {
+                    ResourceList inf = new ResourceList();
+                    inf.resources.add(new Resource(0, Long.MAX_VALUE));
+                    return inf;
                 }
             }
             return best;
