@@ -10,10 +10,10 @@ package chessmaster;
  * @author willian
  */
 public class AllocatedTask {
-    public final long cost;
+    public final Float cost;
     public final Task taskRef;
 
-    public AllocatedTask(Long cost, Task task) {
+    public AllocatedTask(Float cost, Task task) {
         this.cost = cost;
         taskRef = task;
     }

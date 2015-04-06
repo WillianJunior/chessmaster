@@ -24,18 +24,19 @@ class ResourceList {
     ResourceList(ResourceList resourceList) {
         resources = new ArrayList<>();
         for (Resource resource : resourceList.resources) {
-            resources.add(new Resource(resource));
+            if (resource != null)
+                resources.add(new Resource(resource));
         }
     }
     
-    public Long getWastage() {
-        long waste = 0;
+    public Float getWastage() {
+        Float waste = (float) 0;
         for (Resource resource : resources) {
             waste += resource.getWastage();
         }
         
         if (waste < 0)
-            return Long.MAX_VALUE;
+            return Float.MAX_VALUE;
         
         return waste;
     }

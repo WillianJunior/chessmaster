@@ -13,10 +13,10 @@ import java.util.List;
  */
 public class Task {
     
-    public final List<Long> costs;
+    public final List<Float> costs;
     public final int id;
 
-    public Task(int id, List<Long> costs) {
+    public Task(int id, List<Float> costs) {
         this.id = id;
         this.costs = costs;
     }

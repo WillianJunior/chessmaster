@@ -15,14 +15,14 @@ import java.util.List;
 public class Resource {
     
     public final int id;
-    public final Long value;
-    private Long waste;
+    public final Float value;
+    private Float waste;
     private final List<AllocatedTask> allocatedTasks;
 
-    public Resource(int id, long value) {
+    public Resource(int id, Float value) {
         this.id = id;
         this.value = value;
-        waste = value;
+        waste = null;
         allocatedTasks = new ArrayList<>();
     }
     
@@ -30,19 +30,28 @@ public class Resource {
     public Resource(Resource resource) {
         this.id = resource.id;
         this.value = resource.value;
-        long sum = 0;
+        Float sum = (float) 0;
         for (AllocatedTask task : resource.allocatedTasks) {
             sum += task.cost;
         }
-        waste = resource.value - sum;
+        if (sum == 0)
+            waste = null;
+        else
+            waste = resource.value - sum;
         allocatedTasks = new ArrayList<>(resource.getTasks());
     }
     
-    public Long getWastage() {
-        return waste;
+    public Float getWastage() {
+        if (waste == null)
+            return (float) 0;
+        else
+            return waste;
     }
     
     public void allocateTask(AllocatedTask task) {
+        if (waste == null)
+            waste = value;
+        
         allocatedTasks.add(task);
         waste -= task.cost;
     }
@@ -53,8 +62,12 @@ public class Resource {
 
     @Override
     public boolean equals(Object obj) {
-        Resource r = (Resource) obj;
-        return id == r.id;
+        if (obj instanceof Resource) {
+            Resource r = (Resource) obj;
+            return id == r.id;
+        } else
+            return false;
+        
     }
     
 }
