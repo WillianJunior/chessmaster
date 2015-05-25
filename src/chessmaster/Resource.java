@@ -15,49 +15,49 @@ import java.util.List;
 public class Resource {
     
     public final int id;
-    public final Float value;
-    private Float waste;
+    public final Float clock;
+    public final Float cost;
     private final List<AllocatedTask> allocatedTasks;
 
-    public Resource(int id, Float value) {
+    public Resource(int id, Float clock, Float cost) {
         this.id = id;
-        this.value = value;
-        waste = null;
+        this.clock = clock;
+        this.cost = cost;
         allocatedTasks = new ArrayList<>();
     }
     
     // Copy constructor
     public Resource(Resource resource) {
         this.id = resource.id;
-        this.value = resource.value;
-        Float sum = (float) 0;
-        for (AllocatedTask task : resource.allocatedTasks) {
-            sum += task.cost;
-        }
-        if (sum == 0)
-            waste = null;
-        else
-            waste = resource.value - sum;
+        this.clock = resource.clock;
+        this.cost = resource.cost;
         allocatedTasks = new ArrayList<>(resource.getTasks());
     }
     
-    public Float getWastage() {
-        if (waste == null)
-            return (float) 0;
-        else
-            return waste;
-    }
-    
     public void allocateTask(AllocatedTask task) {
-        if (waste == null)
-            waste = value;
-        
         allocatedTasks.add(task);
-        waste -= task.cost;
     }
     
     public List<AllocatedTask> getTasks() {
         return allocatedTasks;
+    }
+    
+    public Float getExecTime() {
+        float cycles = 0;
+        
+        for (AllocatedTask task : allocatedTasks)
+            cycles += task.cost;
+        
+        return cycles/clock;
+    }
+    
+    public Float getCost() {
+        float cycles = 0;
+        
+        for (AllocatedTask task : allocatedTasks)
+            cycles += task.cost;
+        
+        return cost*cycles/clock;
     }
 
     @Override

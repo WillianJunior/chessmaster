@@ -12,7 +12,7 @@ import java.util.List;
  *
  * @author willian
  */
-class ResourceList {
+public class ResourceList {
     
     public final List<Resource> resources;
 
@@ -22,23 +22,44 @@ class ResourceList {
 
     // Copy constructor
     ResourceList(ResourceList resourceList) {
+        
         resources = new ArrayList<>();
+        
         for (Resource resource : resourceList.resources) {
             if (resource != null)
                 resources.add(new Resource(resource));
         }
     }
     
-    public Float getWastage() {
-        Float waste = (float) 0;
-        for (Resource resource : resources) {
-            waste += resource.getWastage();
-        }
+    public Float getFullCost() {
         
-        if (waste < 0)
-            return Float.MAX_VALUE;
+        float cost = 0;
         
-        return waste;
+        for (Resource resource : resources)
+            cost += resource.getCost();
+        
+        return cost;
+    }
+    
+    public Float getAvgTime() {
+        
+        float time = 0;
+        
+        for (Resource resource : resources)
+            time += resource.getExecTime();
+        
+        return time/resources.size();
+    }
+    
+    public Float getMaxTime() {
+        
+        float maxTime = 0;
+        
+        for (Resource resource : resources)
+            if (resource.getExecTime() > maxTime)
+                maxTime = resource.getExecTime();
+        
+        return maxTime;
     }
     
 }

@@ -27,8 +27,8 @@ public class Chessmaster {
         
         ResourceList resources = new ResourceList();
         
-        resources.resources.add(new Resource(1, (float) 500));
-        resources.resources.add(new Resource(2, (float) 600));
+        resources.resources.add(new Resource(1, (float) 2, (float) 0.007));
+        resources.resources.add(new Resource(2, (float) 3.4, (float) 0.012));
         
         Queue<Task> tasks = new LinkedList<>();
         
@@ -45,11 +45,13 @@ public class Chessmaster {
         tasks.add(new Task(2, costs));
         tasks.add(new Task(3, costs2));
         
-        ResourceList out = Chessmaster.minmaxPlayer(resources, tasks, 10);
+        ResourceList out = Chessmaster.minmaxPlayer(resources, tasks, (float) 0.3, 10);
         
-        System.out.println("best waste: " + out.getWastage());
+        System.out.println("best max time: " + out.getMaxTime());
+        System.out.println("best avg time: " + out.getAvgTime());
+        System.out.println("best cost: " + out.getFullCost());
         for (Resource resource : out.resources) {
-            System.out.println("R" + resource.id + " - w: " + resource.getWastage());
+            System.out.println("R" + resource.id + " - t: " + resource.getExecTime() + " - c: " + resource.getCost());
             for (AllocatedTask task : resource.getTasks()) {
                 System.out.println("| T" + task.taskRef.id + " - c: " + task.cost);
             }
@@ -58,47 +60,69 @@ public class Chessmaster {
         
     }
     
-    private static ResourceList minmaxPlayer(ResourceList resourceList, Queue<Task> taskList, int depth) {
+    private static ResourceList minmaxPlayer(ResourceList resourceList, Queue<Task> taskList, float alpha, int depth) {
+        
+        int taskId = taskList.isEmpty() ? -1 : taskList.peek().id;
+        printTab(depth);
+        System.out.println("[" + depth + "] Player - task: " + taskId);
         
         // create a local best to minimise with maximum wastage
         ResourceList best = new ResourceList();
-        Resource r = new Resource(0, Float.MAX_VALUE);
-        r.allocateTask(new AllocatedTask((float) 1, null));
-        best.resources.add(r);
+//        Resource r = new Resource(0, Float.MAX_VALUE);
+//        r.allocateTask(new AllocatedTask((float) 1, null));
+//        best.resources.add(r);
         
-        // if we can still go deeper
-        if (depth != 0) {
+        List<ResourceList> paretoOptResults = new ArrayList<>();
+        
+        // if we can still go deeper and there is a task to schedule
+        if (depth != 0 && !taskList.isEmpty()) {
             for (Resource resource : resourceList.resources) {
                 // create resourceList and taskList copies
                 Queue<Task> taskListCopy = new LinkedList<>(taskList);
                 ResourceList resourceListCopy = new ResourceList(resourceList);
                 
                 // run recursive call with current resource
-                ResourceList result = minmaxNature(resource, resourceListCopy, taskListCopy, depth-1);
+                ResourceList result = minmaxNature(resource, resourceListCopy, taskListCopy, alpha, depth-1);
                 
-                // minimise player's play
-                if (result.getWastage() < best.getWastage())
-                    best = result;
+                // minimise player's play with a pareto optimal and an alpha selector
+                // attempt to add new result to pareto curve
+                paretoOptResults.add(result);
+                List<ResourceList> newParetoOptResults = Pareto.getParetoCurve(paretoOptResults);
+                
+                // if added, attempt to update best result
+                if (newParetoOptResults != null) {
+                    // update pareto curve
+                    paretoOptResults = newParetoOptResults;
+                    
+                    // get pareto optimal for alpha
+                    ResourceList newBest = Pareto.getParetoOptimal(paretoOptResults, alpha);
+                    best = newBest != null ? newBest : best;
+                }
             }
             return best;
         }
-        // if the maximum depth was reached
+        // if the maximum depth was reached or all tasks were scheduled
         else {
             return resourceList;
         }
     }
     
-    private static ResourceList minmaxNature(Resource resource, ResourceList resourceList, Queue<Task> taskList, int depth) {
-        
+    private static ResourceList minmaxNature(Resource resource, ResourceList resourceList, Queue<Task> taskList, float alpha, int depth) {
+        printTab(depth);
+        System.out.println("[" + depth + "] Nature - resource: " + resource.id);
         Task task;
-        ResourceList best = new ResourceList();
-        best.resources.add(new Resource(0, Float.MIN_VALUE));
         
-        // if we can still go deeper and we have a task to schedule
-        if (depth != 0 && (task = taskList.poll()) != null) {
+        // create current best with min cost
+        ResourceList best = new ResourceList();
+        best.resources.add(new Resource(0, (float)0, Float.MIN_VALUE));
+        
+        // if we can still go deeper
+        task = taskList.poll();
+        if (depth != 0) {
             // for each aproximation of a task's cost
             for (Float cost : task.costs) {
                 // attempt to use the new resource to allocate the new task
+                
                 // create resourceList and taskList copies
                 Queue<Task> taskListCopy = new LinkedList<>(taskList);
                 ResourceList resourceListCopy = new ResourceList(resourceList);
@@ -108,31 +132,38 @@ public class Chessmaster {
                 getResource(resource, resourceListCopy.resources).allocateTask(newTask);
                 
                 // recursive call
-                ResourceList result = minmaxPlayer(resourceListCopy, taskListCopy, depth-1);
+                ResourceList result = minmaxPlayer(resourceListCopy, taskListCopy, alpha, depth-1);
                 
                 // penalise negative wastage (underprovisioning)
-                for (Resource r : result.resources) {
-                    if (r.getWastage() < 0) {
-                        ResourceList inf = new ResourceList();
-                        Resource rr = new Resource(0, Float.MAX_VALUE);
-                        rr.allocateTask(new AllocatedTask((float) 1, null));
-                        inf.resources.add(rr);
-                        result = inf;
-                    }
-                }
+//                for (Resource r : result.resources) {
+//                    if (r.getWastage() < 0) {
+//                        ResourceList inf = new ResourceList();
+//                        Resource rr = new Resource(0, Float.MAX_VALUE);
+//                        rr.allocateTask(new AllocatedTask((float) 1, null));
+//                        inf.resources.add(rr);
+//                        result = inf;
+//                    }
+//                }
                 // maxmise nature's play
-                if (result.getWastage() > best.getWastage())
+                if (result.getFullCost() > best.getFullCost())
                     best = result;
             }
             return best;
         } else {
-            // if the max depth was reached or there aren't any more tasks
+            // if the max depth was reached
             return resourceList;
         }
     }
     
     private static Resource getResource(Resource r, List<Resource> rs) {
         return rs.get(rs.indexOf(r));
+    }
+    
+    private static void printTab(int n) {
+        for (int i = 0; i < 10-n; i++) {
+                System.out.print("   ");
+        }
+        
     }
     
 }

@@ -28,13 +28,13 @@ public class Test {
         list1.put(new Float(12), new Float(11));
         list1.put(new Float(18), new Float(5));
         
-        pareto1 = Pareto.getParetoCurve(list1);
+//        pareto1 = Pareto.getParetoCurve(list1);
         
         printMap(list1);
         System.out.println("");
-        printMap(pareto1);
-        Map.Entry<Float, Float> opt = Pareto.getParetoOptimal(pareto1, alpha);
-        System.out.println("optimal: (" + opt.getKey() + ", " + opt.getValue() + ")");
+//        printMap(pareto1);
+//        Map.Entry<Float, Float> opt = Pareto.getParetoOptimal(pareto1, alpha);
+//        System.out.println("optimal: (" + opt.getKey() + ", " + opt.getValue() + ")");
         
     }
     
