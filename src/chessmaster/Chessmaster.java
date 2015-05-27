@@ -62,9 +62,10 @@ public class Chessmaster {
     
     private static ResourceList minmaxPlayer(ResourceList resourceList, Queue<Task> taskList, float alpha, int depth) {
         
-        int taskId = taskList.isEmpty() ? -1 : taskList.peek().id;
-        printTab(depth);
-        System.out.println("[" + depth + "] Player - task: " + taskId);
+        if (!taskList.isEmpty()) {
+            printTab(depth);
+            System.out.println("[" + depth + "] Player - task: " + taskList.peek().id);
+        }
         
         // create a local best to minimise with maximum wastage
         ResourceList best = new ResourceList();
@@ -73,6 +74,24 @@ public class Chessmaster {
 //        best.resources.add(r);
         
         List<ResourceList> paretoOptResults = new ArrayList<>();
+        
+        // create a max cost point (i.e. (0, inf))
+        ResourceList maxCost = new ResourceList();
+        Resource r1 = new Resource(0, (float) 1, Float.MAX_VALUE);
+        r1.allocateTask(new AllocatedTask((float) 1, null));
+        maxCost.resources.add(r1);
+        paretoOptResults.add(maxCost);
+        
+        // create a max time point (i.e. (inf, 0))
+        ResourceList maxTime = new ResourceList();
+        Resource r2 = new Resource(0, (float) 1, (float) 0);
+        r2.allocateTask(new AllocatedTask(Float.MAX_VALUE, null));
+        maxTime.resources.add(r2);
+        paretoOptResults.add(maxTime);
+        
+//        TODO: f1 = 1 and not 0. need to fix
+//        Float f1 = maxCost.getMaxTime();
+//        Float f2 = maxCost.getFullCost();
         
         // if we can still go deeper and there is a task to schedule
         if (depth != 0 && !taskList.isEmpty()) {
@@ -89,6 +108,9 @@ public class Chessmaster {
                 paretoOptResults.add(result);
                 List<ResourceList> newParetoOptResults = Pareto.getParetoCurve(paretoOptResults);
                 
+//                printTab(depth);
+//                System.out.println("    cost=" + result.getFullCost() + ", avgTime=" + result.getAvgTime() + ", maxTime=" + result.getMaxTime());
+                
                 // if added, attempt to update best result
                 if (newParetoOptResults != null) {
                     // update pareto curve
@@ -96,7 +118,8 @@ public class Chessmaster {
                     
                     // get pareto optimal for alpha
                     ResourceList newBest = Pareto.getParetoOptimal(paretoOptResults, alpha);
-                    best = newBest != null ? newBest : best;
+                    if (newBest != null)
+                        best = newBest;
                 }
             }
             return best;
@@ -114,7 +137,7 @@ public class Chessmaster {
         
         // create current best with min cost
         ResourceList best = new ResourceList();
-        best.resources.add(new Resource(0, (float)0, Float.MIN_VALUE));
+        best.resources.add(new Resource(0, (float)1, Float.MIN_VALUE));
         
         // if we can still go deeper
         task = taskList.poll();
@@ -144,6 +167,8 @@ public class Chessmaster {
 //                        result = inf;
 //                    }
 //                }
+                printTab(depth);
+                System.out.println("    cost=" + result.getFullCost() + ", avgTime=" + result.getAvgTime() + ", maxTime=" + result.getMaxTime());
                 // maxmise nature's play
                 if (result.getFullCost() > best.getFullCost())
                     best = result;

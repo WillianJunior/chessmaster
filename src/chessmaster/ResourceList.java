@@ -33,7 +33,7 @@ public class ResourceList {
     
     public Float getFullCost() {
         
-        float cost = 0;
+        Float cost = (float) 0;
         
         for (Resource resource : resources)
             cost += resource.getCost();
@@ -43,7 +43,7 @@ public class ResourceList {
     
     public Float getAvgTime() {
         
-        float time = 0;
+        Float time = (float) 0;
         
         for (Resource resource : resources)
             time += resource.getExecTime();
@@ -53,7 +53,7 @@ public class ResourceList {
     
     public Float getMaxTime() {
         
-        float maxTime = 0;
+        Float maxTime = (float) 0;
         
         for (Resource resource : resources)
             if (resource.getExecTime() > maxTime)

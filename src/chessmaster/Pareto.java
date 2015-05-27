@@ -11,11 +11,10 @@ import static java.lang.StrictMath.cos;
 import static java.lang.StrictMath.pow;
 import static java.lang.StrictMath.sin;
 import static java.lang.StrictMath.sqrt;
-import java.util.AbstractMap;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
-import java.util.Map.Entry;
-import java.util.TreeMap;
 
 /**
  *
@@ -29,26 +28,56 @@ public class Pareto {
         List<ResourceList> paretoCurve = new ArrayList<>();
         
         // set null element as the current limit
-        Float limitCost = (float) 0;
+//        Float limitCost = Float.MAX_VALUE;
         Float limitTime = Float.MAX_VALUE;
-        Float newAngle;
-        Float oldAngle = (float) 0;
+//        Float newAngle;
+//        Float oldAngle = (float) 0;
+        
+        // sort the list of ResourceList by cost 
+        Collections.sort(resources, new Comparator<ResourceList>() {
+            // returns 1 if r2 before r1 and -1 otherwise
+            @Override
+            public int compare(ResourceList r1, ResourceList r2) {
+                return r2.getFullCost() < r1.getFullCost() ? 1 : -1;
+            }
+        });
         
         // for all remaining pairs
         for (ResourceList resource : resources) {
             Float cost = resource.getFullCost();
             Float execTime = resource.getMaxTime();
-            newAngle = new Float(atan((execTime-limitCost)/(limitTime-cost)));
+//            newAngle = (float) atan((cost)/(execTime));
 //            System.out.println("(c=" + cost + ", t=" + execTime + ")");
 //            System.out.println("angle = " + newAngle);
 //            System.out.println("");
             
-            // if second argument is less than or equal to the limit and
-            // the angle is greater than the last angle
-            if (execTime <= limitCost && oldAngle <= newAngle) {
+            // if second argument is less than or equal to the limit
+            if (execTime <= limitTime) {
+                // remove previous points that aren't pareto optimal by adding this new one
+                boolean eliminated;
+                if (paretoCurve.size() >= 2) {
+                    do {
+                        ResourceList p1 = paretoCurve.get(paretoCurve.size()-1);
+                        ResourceList p2 = paretoCurve.get(paretoCurve.size()-2);
+
+                        // calculate the angle (new.time,p1.cost)-p1-new
+                        Float firstAngle = (float) atan((cost-p1.getFullCost())/(p1.getMaxTime()-execTime));
+
+                        // calculate the angle (p1.time,p2.cost)-p2-p1
+                        Float secondAngle = (float) atan((p1.getFullCost()-p2.getFullCost())/(p2.getMaxTime()-p1.getMaxTime()));
+
+                        // remove p1 if it doesn't belong anymore to the pareto curve
+                        eliminated = false;
+                        if (firstAngle < secondAngle) {
+                            paretoCurve.remove(paretoCurve.size());
+                            eliminated = true;
+                        }
+                    } while(eliminated);
+                }
+                
                 // add to the curve and set it as the new limit
                 paretoCurve.add(resource);
-                limitCost = cost;
+//                limitCost = cost;
                 limitTime = execTime;
             }
         }
